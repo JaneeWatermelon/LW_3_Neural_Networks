@@ -1,8 +1,10 @@
 import os
+import random
 from typing import Dict
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
@@ -33,6 +35,11 @@ def plot_training_history(history: Dict[str, list[float]]) -> None:
 if __name__ == "__main__":
     os.environ["TCL_LIBRARY"] = r"C:\Users\Warer\AppData\Local\Programs\Python\Python313\tcl\tcl8.6"
     os.environ["TK_LIBRARY"] = r"C:\Users\Warer\AppData\Local\Programs\Python\Python313\tcl\tk8.6"
+
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
 
     print("Загрузка данных...")
 
@@ -65,7 +72,6 @@ if __name__ == "__main__":
     # 5. Разделение данных
     print("Разделение данных на обучающую и тестовую выборки")
 
-    np.random.seed(42)
     indices = np.random.permutation(len(X))
 
     split = int(len(X) * 0.8)
@@ -106,7 +112,7 @@ if __name__ == "__main__":
         epochs=100,
         batch_size=32,
         validation_split=0.2,
-        verbose=1
+        verbose=1,
     )
 
     # 8. Оценка
@@ -114,7 +120,7 @@ if __name__ == "__main__":
 
     loss, mae = model.evaluate(X_test, y_test)
 
-    print("MSE:", loss)
+    print("loss:", loss)
     print("MAE:", mae)
 
     # 9. Предсказания
