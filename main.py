@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Input
 
 def plot_training_history(history: Dict[str, list[float]]) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
@@ -56,7 +56,37 @@ if __name__ == "__main__":
     df["average_score"] = df[["math score", "reading score", "writing score"]].mean(axis=1)
 
     # 3. Признаки
-    X = df[["math score", "reading score", "writing score"]].values
+    categorical_cols = [
+        "gender",
+        "race/ethnicity",
+        "parental level of education",
+        "lunch",
+        "test preparation course"
+    ]
+
+    X_df = df[categorical_cols].copy()
+
+    onehot_features = []
+    ordinal_features = []
+
+    for col in categorical_cols:
+        unique_vals = X_df[col].nunique()
+
+        # One-Hot
+        if unique_vals <= 5:
+            dummies = pd.get_dummies(X_df[col], prefix=col).astype("int")
+            onehot_features.append(dummies)
+
+        # Ordinal Encoding
+        else:
+            categories = {v: i for i, v in enumerate(sorted(X_df[col].unique()))}
+            encoded = X_df[col].map(categories).to_frame(col)
+            ordinal_features.append(encoded)
+
+    # объединяем все признаки
+    X_processed = pd.concat(onehot_features + ordinal_features, axis=1)
+
+    X = X_processed.fillna(0).values
     y = df["average_score"].values
 
     num_features = X.shape[1]
@@ -88,10 +118,13 @@ if __name__ == "__main__":
 
     # 6. Создание модели
     print("Создаём нейронную сеть")
+    print("Входной размер:", num_features)
+    print("Кол-во выходов:", 1)
 
     model = Sequential([
-        Dense(16, activation="relu", input_shape=(3,)),
-        Dense(8, activation="relu"),
+        Input((num_features, )),
+        Dense(64, activation="relu"),
+        Dense(16, activation="relu"),
         Dense(1)
     ])
 
@@ -100,8 +133,6 @@ if __name__ == "__main__":
         loss="mse",
         metrics=["mae"]
     )
-
-    print("Модель скомпилирована")
 
     # 7. Обучение
     print("Начинаем обучение модели")
